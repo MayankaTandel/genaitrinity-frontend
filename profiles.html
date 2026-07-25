@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Who's using Vital? — AI Fitness Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  .picker-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .picker-card { width: 100%; max-width: 560px; }
+  .picker-eyebrow { color: var(--growth); font-weight: 700; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; margin-top: 22px; }
+  .profile-tile {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 18px 10px; border-radius: var(--radius-md); border: 1.5px solid var(--border);
+    background: var(--surface); cursor: pointer;
+    transition: transform 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+  }
+  .profile-tile:hover { transform: translateY(-2px); border-color: var(--growth); box-shadow: var(--shadow-card); }
+  .profile-tile .avatar-lg { width: 56px; height: 56px; font-size: 19px; }
+  .profile-tile .p-name { font-weight: 600; font-size: 14px; text-align: center; word-break: break-word; }
+  .profile-tile .p-goal { font-size: 11.5px; color: var(--muted); text-transform: capitalize; }
+  .profile-tile .p-remove {
+    position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--canvas); color: var(--muted); font-size: 13px; line-height: 1;
+    border: none; cursor: pointer; opacity: 0; transition: opacity 0.15s var(--ease), color 0.15s var(--ease), background 0.15s var(--ease);
+  }
+  .profile-tile:hover .p-remove { opacity: 1; }
+  .profile-tile .p-remove:hover { background: var(--signal-soft); color: var(--danger); }
+  .profile-tile.add-tile { border-style: dashed; color: var(--muted); }
+  .profile-tile.add-tile:hover { color: var(--ink); }
+  .add-tile .plus-circle {
+    width: 56px; height: 56px; border-radius: 50%; border: 1.5px dashed var(--border);
+    display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--muted);
+  }
+  .picker-empty { color: var(--muted); font-size: 13.5px; margin-top: 22px; }
+</style>
+</head>
+<body>
+
+<div class="picker-shell">
+  <div class="card picker-card fade-in">
+    <div class="picker-eyebrow">Vital</div>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+      <span class="auth-mark" style="width:30px;height:30px;border-radius:9px;"></span>
+      <h2 style="font-size:22px;">Who's using Vital?</h2>
+    </div>
+    <p style="color:var(--muted); font-size:13.5px; margin-top:-2px;">
+      Pick your profile, or add a new one for someone else.
+    </p>
+
+    <div id="loadingNote" style="color:var(--muted); font-size:13px; margin-top:18px;">Loading profiles…</div>
+    <div class="picker-empty" id="emptyNote" style="display:none;">No profiles yet — add the first one below.</div>
+    <div class="profile-grid" id="profileGrid" style="display:none;"></div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script>
+  const grid = document.getElementById("profileGrid");
+  const loadingNote = document.getElementById("loadingNote");
+  const emptyNote = document.getElementById("emptyNote");
+
+  function tileFor(user) {
+    const tile = document.createElement("div");
+    tile.className = "profile-tile";
+    tile.innerHTML = `
+      <button class="p-remove" title="Remove profile" aria-label="Remove profile">&times;</button>
+      <div class="avatar-lg">${initials(user.name)}</div>
+      <div class="p-name">${user.name}</div>
+      <div class="p-goal">${user.goal ? user.goal + " weight" : "Setup incomplete"}</div>
+    `;
+
+    tile.addEventListener("click", () => selectProfile(user.id));
+
+    const removeBtn = tile.querySelector(".p-remove");
+    removeBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (!confirm(`Remove ${user.name}'s profile and all of their data? This can't be undone.`)) return;
+      try {
+        await api(`/users/${user.id}`, { method: "DELETE" });
+        loadProfiles();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    });
+
+    return tile;
+  }
+
+  function addTile() {
+    const tile = document.createElement("div");
+    tile.className = "profile-tile add-tile";
+    tile.innerHTML = `
+      <div class="plus-circle">+</div>
+      <div class="p-name">Add profile</div>
+    `;
+    tile.addEventListener("click", createProfile);
+    return tile;
+  }
+
+  async function selectProfile(id) {
+    setActiveProfileId(id);
+    try {
+      const { user } = await api("/profile");
+      window.location.href = user && user.onboarded ? "dashboard.html" : "onboarding.html";
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  }
+
+  async function createProfile() {
+    try {
+      const { id } = await api("/users", { method: "POST" });
+      setActiveProfileId(id);
+      window.location.href = "onboarding.html";
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  }
+
+  async function loadProfiles() {
+    grid.innerHTML = "";
+    grid.style.display = "none";
+    emptyNote.style.display = "none";
+    loadingNote.style.display = "block";
+
+    try {
+      const { users } = await api("/users");
+      loadingNote.style.display = "none";
+      grid.style.display = "grid";
+
+      users.forEach((u) => grid.appendChild(tileFor(u)));
+      grid.appendChild(addTile());
+
+      if (users.length === 0) emptyNote.style.display = "block";
+    } catch (err) {
+      loadingNote.textContent = err.message || "Couldn't load profiles.";
+    }
+  }
+
+  loadProfiles();
+</script>
+</body>
+</html>

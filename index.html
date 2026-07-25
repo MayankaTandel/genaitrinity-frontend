@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AI Fitness Tracker</title>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script>
+  if (!getActiveProfileId()) {
+    window.location.href = "profiles.html";
+  } else {
+    api("/profile")
+      .then((data) => {
+        window.location.href = data.user && data.user.onboarded ? "dashboard.html" : "onboarding.html";
+      })
+      .catch(() => {
+        window.location.href = "profiles.html";
+      });
+  }
+</script>
+</head>
+<body></body>
+</html>

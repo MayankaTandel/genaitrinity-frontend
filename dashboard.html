@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — AI Fitness Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen"><div class="loading-ring"></div></div>
+
+<div class="app-shell">
+  <!-- Sidebar (desktop) -->
+  <aside class="sidebar">
+    <div class="brand"><span class="auth-mark"></span> Vital</div>
+
+    <ul class="nav-list">
+      <li class="nav-item" data-page="home">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        Home <span class="nav-dot"></span>
+      </li>
+      <li class="nav-item" data-page="food">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v7a3 3 0 003 3v10"/><path d="M6 2v7"/><path d="M9 2v7"/><path d="M18 2c-2 0-3 2-3 5v4h3v11"/></svg>
+        Food <span class="nav-dot"></span>
+      </li>
+      <li class="nav-item" data-page="activity">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+        Activity <span class="nav-dot"></span>
+      </li>
+      <li class="nav-item" data-page="profile">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+        Profile <span class="nav-dot"></span>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar-chip" id="sidebarAvatar">?</div>
+        <div>
+          <div class="name" id="sidebarName">—</div>
+          <div class="goal-tag" id="sidebarGoal">—</div>
+        </div>
+      </div>
+      <div class="logout-link" id="signOutBtn">Switch profile / Sign out</div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+
+    <!-- HOME -->
+    <section class="page-section" id="page-home">
+      <div class="topbar">
+        <div>
+          <h1>Hey <span id="homeGreetName">there</span> 👋</h1>
+          <div class="date-tag" id="homeDate">—</div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="grid-2">
+          <div class="card fade-in">
+            <h3>Today's balance</h3>
+            <div class="card-sub">Calories remaining toward your goal</div>
+            <div class="vital-ring-wrap" style="margin-top:18px;">
+              <div class="vital-ring" id="vitalRing">
+                <div class="vital-ring-center">
+                  <div class="num tabular" id="ringNum">0</div>
+                  <div class="lbl">kcal left</div>
+                </div>
+              </div>
+              <div class="vital-legend">
+                <div class="legend-row"><span class="legend-dot" style="background:var(--growth)"></span>Consumed <span class="val tabular" id="legendConsumed">0</span></div>
+                <div class="legend-row"><span class="legend-dot" style="background:var(--signal)"></span>Burned <span class="val tabular" id="legendBurned">0</span></div>
+                <div class="legend-row"><span class="legend-dot" style="background:var(--border)"></span>Goal <span class="val tabular" id="legendGoal">0</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card fade-in delay-1">
+            <h3>BMI</h3>
+            <div class="card-sub">Body Mass Index</div>
+            <div style="display:flex; align-items:baseline; gap:10px; margin-top:14px;">
+              <div class="stat-value tabular" id="bmiValue">—</div>
+              <div class="badge" id="bmiCategoryBadge" style="background:var(--growth-soft); color:#146b3a;">—</div>
+            </div>
+            <div class="bmi-meter">
+              <div class="bmi-track"><div class="bmi-marker" id="bmiMarker" style="left:0%"></div></div>
+              <div class="bmi-labels"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="card stat-card fade-in delay-1">
+            <div class="stat-label">Calories Consumed</div>
+            <div class="stat-value tabular" id="statConsumed">0</div>
+            <div class="stat-delta" id="statFoodCount">0 entries today</div>
+          </div>
+          <div class="card stat-card fade-in delay-2">
+            <div class="stat-label">Calories Burned</div>
+            <div class="stat-value tabular" id="statBurned">0</div>
+            <div class="stat-delta" id="statActivityCount">0 workouts today</div>
+          </div>
+          <div class="card stat-card fade-in delay-3">
+            <div class="stat-label">Daily Goal</div>
+            <div class="stat-value tabular" id="statGoal">0</div>
+            <div class="stat-delta" id="statGoalType">—</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card fade-in">
+            <h3>Consumed vs. Burned</h3>
+            <div class="card-sub">Last 7 days</div>
+            <div class="chart-wrap"><canvas id="weekChart"></canvas></div>
+          </div>
+          <div class="card fade-in delay-1">
+            <h3>Meals today</h3>
+            <div class="card-sub">Calorie split by meal</div>
+            <div class="chart-wrap" style="height:200px;"><canvas id="mealChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOD -->
+    <section class="page-section" id="page-food">
+      <div class="topbar">
+        <div><h1>Food log</h1><div class="date-tag">Track what you eat, meal by meal</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="stack">
+          <div class="card fade-in">
+            <h3>✨ AI Food Snap</h3>
+            <div class="card-sub">Upload a photo — Gemini identifies the food and estimates calories</div>
+            <div class="snap-zone" id="snapZone" style="margin-top:14px;">
+              <input type="file" id="snapInput" accept="image/*" />
+              <div class="snap-icon">📸</div>
+              <div class="snap-text">Drop a photo or tap to upload</div>
+              <div class="snap-sub">JPG or PNG, up to 4MB</div>
+            </div>
+            <div class="snap-preview" id="snapPreview" style="display:none;">
+              <img id="snapImg" src="" alt="Food preview" />
+              <div class="snap-result">
+                <div class="name" id="snapName">Analyzing…</div>
+                <div class="cal" id="snapCal"></div>
+              </div>
+            </div>
+            <div id="snapError" class="error-banner" style="margin-top:12px;"></div>
+          </div>
+
+          <div class="card fade-in delay-1">
+            <h3>Add food manually</h3>
+            <form id="foodForm" style="margin-top:14px;">
+              <div class="field">
+                <label for="foodName">Food name</label>
+                <input class="input" id="foodName" required placeholder="e.g. Grilled chicken bowl" />
+              </div>
+              <div class="row-2">
+                <div class="field">
+                  <label for="foodCalories">Calories</label>
+                  <input class="input" id="foodCalories" type="number" min="0" max="5000" required placeholder="450" />
+                </div>
+                <div class="field">
+                  <label>Meal</label>
+                  <select class="input" id="foodMeal">
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                  </select>
+                </div>
+              </div>
+              <div class="error-banner" id="foodError"></div>
+              <button type="submit" class="btn btn-primary btn-block" id="foodSubmitBtn">Add to log</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card fade-in delay-2">
+          <h3>Today's meals</h3>
+          <div class="card-sub" id="foodTotalToday">0 kcal logged</div>
+          <div class="entry-list" id="foodList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section class="page-section" id="page-activity">
+      <div class="topbar">
+        <div><h1>Activity log</h1><div class="date-tag">Log workouts to see calories burned</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card fade-in">
+          <h3>Log a workout</h3>
+          <form id="activityForm" style="margin-top:14px;">
+            <div class="field">
+              <label>Activity type</label>
+              <select class="input" id="activityType">
+                <option value="running">🏃 Running</option>
+                <option value="swimming">🏊 Swimming</option>
+                <option value="cycling">🚴 Cycling</option>
+                <option value="yoga">🧘 Yoga</option>
+                <option value="weight_training">🏋️ Weight Training</option>
+                <option value="walking">🚶 Walking</option>
+                <option value="hiking">🥾 Hiking</option>
+                <option value="other">⚡ Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="activityDuration">Duration (minutes)</label>
+              <input class="input" id="activityDuration" type="number" min="1" max="600" required placeholder="30" />
+            </div>
+            <div class="field hint" id="activityEstimate" style="color:var(--muted); font-size:12.5px;"></div>
+            <div class="error-banner" id="activityError"></div>
+            <button type="submit" class="btn btn-primary btn-block" id="activitySubmitBtn">Log activity</button>
+          </form>
+        </div>
+
+        <div class="card fade-in delay-1">
+          <h3>Today's workouts</h3>
+          <div class="card-sub" id="activityTotalToday">0 kcal burned</div>
+          <div class="entry-list" id="activityList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="page-section" id="page-profile">
+      <div class="topbar">
+        <div><h1>Profile</h1><div class="date-tag">Your details and goal</div></div>
+      </div>
+
+      <div class="card fade-in" style="max-width:560px;">
+        <div class="profile-header">
+          <div class="avatar-lg" id="profileAvatar">?</div>
+          <div class="who">
+            <h2 id="profileName">—</h2>
+            <p id="profileGoalLine">—</p>
+          </div>
+        </div>
+
+        <div class="success-banner" id="profileSuccess">Profile updated ✓</div>
+        <div class="error-banner" id="profileError"></div>
+
+        <form id="profileForm">
+          <div class="field">
+            <label for="pName">Full name</label>
+            <input class="input" id="pName" required />
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label for="pAge">Age</label>
+              <input class="input" id="pAge" type="number" min="10" max="100" required />
+            </div>
+            <div class="field">
+              <label>Gender</label>
+              <select class="input" id="pGender">
+                <option value="other">Prefer not to say</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label for="pHeight">Height (cm)</label>
+              <input class="input" id="pHeight" type="number" min="100" max="250" required />
+            </div>
+            <div class="field">
+              <label for="pWeight">Weight (kg)</label>
+              <input class="input" id="pWeight" type="number" min="25" max="300" step="0.1" required />
+            </div>
+          </div>
+          <div class="field">
+            <label>Goal</label>
+            <div class="goal-grid">
+              <div>
+                <input type="radio" name="pGoal" id="pGoalLose" value="lose" />
+                <label class="goal-card" for="pGoalLose"><span class="emoji">🔥</span><span class="lbl">Lose weight</span></label>
+              </div>
+              <div>
+                <input type="radio" name="pGoal" id="pGoalMaintain" value="maintain" />
+                <label class="goal-card" for="pGoalMaintain"><span class="emoji">⚖️</span><span class="lbl">Maintain</span></label>
+              </div>
+              <div>
+                <input type="radio" name="pGoal" id="pGoalGain" value="gain" />
+                <label class="goal-card" for="pGoalGain"><span class="emoji">💪</span><span class="lbl">Gain weight</span></label>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="profileSubmitBtn">Save changes</button>
+        </form>
+
+        <button type="button" class="btn btn-outline btn-block" id="signOutBtnMobile" style="margin-top:14px;">Switch profile / Sign out</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-item" data-page="home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+    Home
+  </div>
+  <div class="mobile-nav-item" data-page="food">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v7a3 3 0 003 3v10"/><path d="M6 2v7"/><path d="M9 2v7"/><path d="M18 2c-2 0-3 2-3 5v4h3v11"/></svg>
+    Food
+  </div>
+  <div class="mobile-nav-item" data-page="activity">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+    Activity
+  </div>
+  <div class="mobile-nav-item" data-page="profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+    Profile
+  </div>
+</nav>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/home.js"></script>
+<script src="js/food.js"></script>
+<script src="js/activity.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
